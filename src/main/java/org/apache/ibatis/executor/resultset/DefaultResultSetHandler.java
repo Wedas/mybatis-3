@@ -16,6 +16,7 @@
 package org.apache.ibatis.executor.resultset;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -633,7 +634,17 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       for (ResultMapping propertyMapping : propertyMappings) {
         // issue gcode #109 && issue #149
         if (propertyMapping.getNestedQueryId() != null && propertyMapping.isLazy()) {
-          resultObject = configuration.getProxyFactory().createProxy(resultObject, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
+          if (resultObject.getClass().getName().contains("Engine")) {
+            try {
+              Class proxyClass = Class.forName("packageName.EngineJavassistProxy");
+              resultObject = proxyClass.getDeclaredConstructor().newInstance();
+            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+              e.printStackTrace();
+            }
+          } else {
+            resultObject = configuration.getProxyFactory().createProxy(resultObject, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
+          }
+
           break;
         }
       }

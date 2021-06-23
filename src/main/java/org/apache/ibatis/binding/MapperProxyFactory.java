@@ -15,6 +15,8 @@
  */
 package org.apache.ibatis.binding;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
@@ -50,6 +52,14 @@ public class MapperProxyFactory<T> {
 
   public T newInstance(SqlSession sqlSession) {
     final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
+    if (mapperInterface != null && mapperInterface.getName().contains("EngineMapper")) {
+      try {
+        Class proxyClass = mapperInterface.getClassLoader().loadClass("packageName.EngineMapperJdkProxy");
+        return (T) proxyClass.getDeclaredConstructor(InvocationHandler.class).newInstance(mapperProxy);
+      } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        e.printStackTrace();
+      }
+    }
     return newInstance(mapperProxy);
   }
 
